@@ -47,6 +47,20 @@ public class EzrebBot extends PircBot {
 			}
 		}
 	});
+	public static Thread peopleAdder = new Thread(new Runnable() {
+		
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					Thread.sleep(10000);
+					EzrebBot.bot.checkPeople();
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		}
+	});
 	
 	@SuppressWarnings("unchecked")
 	public EzrebBot() {
@@ -86,12 +100,12 @@ public class EzrebBot extends PircBot {
 		sendMessage(settings.getProperty("channel"), "Heyo everybody! Wassup? I'm EzraTheBot, a custom made bot by MrabEzreb.");
 		User[] currentUsers = getUsers(settings.getProperty("channel"));
 		for (User user : currentUsers) {
-			String sender = user.getNick();
-			if(!people.containsKey(sender)) {
+			String sender2 = user.getNick();
+			if(!people.containsKey(sender2)) {
 				Person newPerson = new Person();
-				newPerson.nick = sender;
+				newPerson.nick = sender2;
 				newPerson.fans = 0;
-				people.put(sender, newPerson);
+				people.put(sender2, newPerson);
 			}
 		}
 	}
@@ -104,12 +118,22 @@ public class EzrebBot extends PircBot {
 			newPerson.fans = 0;
 			people.put(sender, newPerson);
 		}
+		User[] currentUsers = getUsers(settings.getProperty("channel"));
+		for (User user : currentUsers) {
+			String sender2 = user.getNick();
+			if(!people.containsKey(sender2)) {
+				Person newPerson = new Person();
+				newPerson.nick = sender2;
+				newPerson.fans = 0;
+				people.put(sender2, newPerson);
+			}
+		}
 	}
 	
 	@Override
 	protected void onMessage(String channel, String sender, String login, String hostname, String message) {
 		if(message.startsWith("!")) {
-			System.err.println(sender+": "+message);
+			System.out.println(sender+": "+message);
 			onCommand(channel, sender, login, hostname, message);
 		} else {
 			System.out.println(sender+": "+message);
@@ -117,10 +141,15 @@ public class EzrebBot extends PircBot {
 	}
 	
 	protected void onCommand(String channel, String sender, String login, String hostname, String command) {
+		if(!sender.toLowerCase().equals("mrabezreb")) {
+			return;
+		}
 		if(command.equals("!leave")) {
 			disconnect();
 			dispose();
 			fanGiver.interrupt();
+			peopleAdder.interrupt();
+			ControlPanel.close();
 			ObjectOutputStream oos = null;
 			try {
 				oos = new ObjectOutputStream(new FileOutputStream(new File("People.people")));
@@ -138,6 +167,7 @@ public class EzrebBot extends PircBot {
 					e.printStackTrace();
 				}
 			}
+			System.exit(0);
 		} else if(command.equals("!hi")) {		
 			sendMessage(channel, "Hi there, "+sender);
 		} else if(command.equals("!fans")) {
@@ -153,6 +183,12 @@ public class EzrebBot extends PircBot {
 		} else if(command.startsWith("!here")) {
 			String usern = command.substring(6);
 			sendMessage(channel, "User "+usern+" is currently "+(people.get(usern).isWatching() ? "online" : "offline"));
+		} else if(command.equals("!debugPeople")) {
+			Collection<Person> peeps = people.values();
+			System.err.println(peeps.size());
+			for (Person person : peeps) {
+				System.err.println("Person: "+person.nick+"/"+person.isWatching());
+			}
 		}
 	}
 	
@@ -177,11 +213,7 @@ public class EzrebBot extends PircBot {
 	@Override
 	protected void onUserList(String channel, User[] users) {
 		super.onUserList(channel, users);
-		System.out.println("Got Users");
-		System.out.println(channel);
-		for (User user : users) {
-			System.out.println(user.getNick());
-		}
+		checkPeople();
 	}
 	
 	public void addFans() {
@@ -189,6 +221,19 @@ public class EzrebBot extends PircBot {
 		for (Person person : peeps) {
 			if(person.isWatching()) {
 				person.fans += 5;
+			}
+		}
+	}
+	
+	public void checkPeople() {
+		User[] currentUsers = getUsers(settings.getProperty("channel"));
+		for (User user : currentUsers) {
+			String sender2 = user.getNick();
+			if(!people.containsKey(sender2)) {
+				Person newPerson = new Person();
+				newPerson.nick = sender2;
+				newPerson.fans = 0;
+				people.put(sender2, newPerson);
 			}
 		}
 	}
@@ -206,10 +251,8 @@ public class EzrebBot extends PircBot {
 		Properties prop = new Properties();
 		prop.setProperty("channel", "#mrabezreb");
 		bot.settings = new Properties(prop);
-		System.out.println(bot.settings.toString());
 		try {
 			bot.settings.load(new FileInputStream(new File("EzrebBot.properties")));
-			System.out.println(bot.settings.toString());
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
@@ -217,7 +260,7 @@ public class EzrebBot extends PircBot {
 		}
 		ControlPanel.main();
 		try {
-			bot.connect("irc.twitch.tv", 6667, "oauth:8nd7xf50x1wqhuwl02ylgal27jwxzl");
+			bot.connect("localhost", 6667, "oauth:8nd7xf50x1wqhuwl02ylgal27jwxzl");
 		} catch (NickAlreadyInUseException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -226,5 +269,6 @@ public class EzrebBot extends PircBot {
 			e.printStackTrace();
 		}
 		fanGiver.start();
+		peopleAdder.start();
 	}
 }
