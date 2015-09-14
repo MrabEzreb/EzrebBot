@@ -15,9 +15,7 @@ public class Person implements Serializable {
 	
 	public boolean isWatching() {
 		User[] users = EzrebBot.bot.getUsers(EzrebBot.bot.settings.getProperty("channel"));
-		//System.out.println(EzrebBot.bot.settings.getProperty("channel"));
 		for (User user : users) {
-			//System.out.println(user.getNick());
 			if(user.getNick().equalsIgnoreCase(nick)) {
 				return true;
 			}
