@@ -98,16 +98,7 @@ public class EzrebBot extends PircBot {
 		sendRawLineViaQueue("CAP REQ :twitch.tv/membership");
 		joinChannel(settings.getProperty("channel"));
 		sendMessage(settings.getProperty("channel"), "Heyo everybody! Wassup? I'm EzraTheBot, a custom made bot by MrabEzreb.");
-		User[] currentUsers = getUsers(settings.getProperty("channel"));
-		for (User user : currentUsers) {
-			String sender2 = user.getNick();
-			if(!people.containsKey(sender2)) {
-				Person newPerson = new Person();
-				newPerson.nick = sender2;
-				newPerson.fans = 0;
-				people.put(sender2, newPerson);
-			}
-		}
+		checkPeople();
 	}
 	
 	@Override
@@ -118,16 +109,7 @@ public class EzrebBot extends PircBot {
 			newPerson.fans = 0;
 			people.put(sender, newPerson);
 		}
-		User[] currentUsers = getUsers(settings.getProperty("channel"));
-		for (User user : currentUsers) {
-			String sender2 = user.getNick();
-			if(!people.containsKey(sender2)) {
-				Person newPerson = new Person();
-				newPerson.nick = sender2;
-				newPerson.fans = 0;
-				people.put(sender2, newPerson);
-			}
-		}
+		checkPeople();
 	}
 	
 	@Override
@@ -177,18 +159,21 @@ public class EzrebBot extends PircBot {
 			dispose();
 			main(new String[0]);
 		} else if(command.startsWith("!roll")) {
-			sendMessage(channel, ""+new Random().nextInt(new Integer(command.substring(6))+1));
+			rollDice(command.substring(6));
 		} else if(command.equals("!yomamma")) {
 			sendMessage(channel, getYoMamma());
 		} else if(command.startsWith("!here")) {
 			String usern = command.substring(6);
-			sendMessage(channel, "User "+usern+" is currently "+(people.get(usern).isWatching() ? "online" : "offline"));
+			sendMessage(channel, "User "+usern+" is currently "+(people.get(usern.toLowerCase()).isWatching() ? "online" : "offline"));
 		} else if(command.equals("!debugPeople")) {
 			Collection<Person> peeps = people.values();
 			System.err.println(peeps.size());
 			for (Person person : peeps) {
 				System.err.println("Person: "+person.nick+"/"+person.isWatching());
 			}
+		} else if(command.equals("!resetPeople")) {
+			people.clear();
+			checkPeople();
 		}
 	}
 	
@@ -228,7 +213,7 @@ public class EzrebBot extends PircBot {
 	public void checkPeople() {
 		User[] currentUsers = getUsers(settings.getProperty("channel"));
 		for (User user : currentUsers) {
-			String sender2 = user.getNick();
+			String sender2 = user.getNick().toLowerCase();
 			if(!people.containsKey(sender2)) {
 				Person newPerson = new Person();
 				newPerson.nick = sender2;
@@ -236,6 +221,22 @@ public class EzrebBot extends PircBot {
 				people.put(sender2, newPerson);
 			}
 		}
+	}
+	
+	public void rollDice(String dieFormula) {
+		int num = new Integer(dieFormula.substring(0, dieFormula.indexOf("d")));
+		int sides = new Integer(dieFormula.substring(dieFormula.indexOf("d")+1));
+		int roll = 0;
+		for (int i = 1; i <= num; i++) {
+			roll += rollDie(sides);
+		}
+		sendMessage(settings.getProperty("channel"), ""+roll);
+	}
+	
+	public Random random = new Random();
+	
+	public int rollDie(int sides) {
+		return random.nextInt(sides)+1;
 	}
 	
 	public static void main(String[] args) {
