@@ -118,20 +118,44 @@ public class EzrebBot extends PircBot {
 			System.out.println(sender+": "+message);
 			onCommand(channel, sender, login, hostname, message);
 		} else {
+			processMessage(channel, sender, message);
 			System.out.println(sender+": "+message);
 		}
 	}
 	
-	protected void onCommand(String channel, String sender, String login, String hostname, String command) {
-		if(!sender.toLowerCase().equals("mrabezreb")) {
-			return;
+	protected void processMessage(String channel, String sender, String message) {
+		if(message.contains("fuck")) {
+			sendMessage(channel, "/timeout "+sender+" 1");
+			sendMessage(channel, "Please do not use profanity!");
 		}
+		if(message.contains("shit")) {
+			sendMessage(channel, "/timeout "+sender+" 1");
+			sendMessage(channel, "Please do not use profanity!");
+		}
+		if(message.contains("ass")) {
+			sendMessage(channel, "/timeout "+sender+" 1");
+			sendMessage(channel, "Please do not use profanity!");
+		}
+		if(message.contains("damn")) {
+			sendMessage(channel, "/timeout "+sender+" 1");
+			sendMessage(channel, "Please do not use profanity!");
+		}
+		if(message.contains("bitch")) {
+			sendMessage(channel, "/timeout "+sender+" 1");
+			sendMessage(channel, "Please do not use profanity!");
+		}
+	}
+	
+	protected void onCommand(String channel, String sender, String login, String hostname, String command) {
 		if(command.equals("!leave")) {
-			disconnect();
-			dispose();
+			if(!sender.toLowerCase().equals("mrabezreb")) {
+				return;
+			}
 			fanGiver.interrupt();
 			peopleAdder.interrupt();
-			ControlPanel.close();
+			if(noGUI == false) {
+				ControlPanel.close();
+			}
 			ObjectOutputStream oos = null;
 			try {
 				oos = new ObjectOutputStream(new FileOutputStream(new File("People.people")));
@@ -145,35 +169,82 @@ public class EzrebBot extends PircBot {
 				try {
 					oos.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(new File("EzrebBot.properties"));
+				settings.store(fos, "");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					fos.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					fos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			disconnect();
+			dispose();
 			System.exit(0);
 		} else if(command.equals("!hi")) {		
 			sendMessage(channel, "Hi there, "+sender);
 		} else if(command.equals("!fans")) {
-			sendMessage(channel, sender+"\'s non-existant fanbase is "+people.get(sender).fans+" fans strong!");
-		} else if(command.equals("!restart")) {
-			disconnect();
-			dispose();
-			main(new String[0]);
+			sendMessage(channel, sender+"\'s non-existant fanbase is "+people.get(sender.toLowerCase()).fans+" fans strong!");
 		} else if(command.startsWith("!roll")) {
-			rollDice(command.substring(6));
+			rollFormulas(command.substring(6));
 		} else if(command.equals("!yomamma")) {
 			sendMessage(channel, getYoMamma());
 		} else if(command.startsWith("!here")) {
 			String usern = command.substring(6);
 			sendMessage(channel, "User "+usern+" is currently "+(people.get(usern.toLowerCase()).isWatching() ? "online" : "offline"));
 		} else if(command.equals("!debugPeople")) {
-			Collection<Person> peeps = people.values();
-			System.err.println(peeps.size());
+			if(!sender.toLowerCase().equals("mrabezreb")) {
+				return;
+			}
+			Collection<Person> peeps = people.values();	
 			for (Person person : peeps) {
-				System.err.println("Person: "+person.nick+"/"+person.isWatching());
+				System.out.println("Person: "+person.nick+"/"+person.isWatching());
 			}
 		} else if(command.equals("!resetPeople")) {
+			if(!sender.toLowerCase().equals("mrabezreb")) {
+				return;
+			}
 			people.clear();
 			checkPeople();
+		} else if(command.startsWith("!addFans")) {
+			if(!sender.toLowerCase().equals("mrabezreb")) {
+				return;
+			}
+			addFans(command.substring(9));
+		} else if(command.equals("!meow")) {
+			sendMessage(channel, "Meow meow meow meow meow meow meow meow! :D");
+		}
+	}
+	
+	protected void addFans(String args) {
+		String name = args.substring(0, args.indexOf(" "));
+		int points = new Integer(args.substring(args.indexOf(" ")+1));
+		name = name.toLowerCase();
+		if(people.containsKey(name)) {
+			people.get(name).fans += points;
+			sendMessage(settings.getProperty("channel"), "Added "+points+" points to "+name);
+		} else {
+			sendMessage(settings.getProperty("channel"), name+" has never been here. :P");
 		}
 	}
 	
@@ -201,7 +272,7 @@ public class EzrebBot extends PircBot {
 		checkPeople();
 	}
 	
-	public void addFans() {
+	protected void addFans() {
 		Collection<Person> peeps = people.values();
 		for (Person person : peeps) {
 			if(person.isWatching()) {
@@ -210,7 +281,7 @@ public class EzrebBot extends PircBot {
 		}
 	}
 	
-	public void checkPeople() {
+	protected void checkPeople() {
 		User[] currentUsers = getUsers(settings.getProperty("channel"));
 		for (User user : currentUsers) {
 			String sender2 = user.getNick().toLowerCase();
@@ -223,26 +294,75 @@ public class EzrebBot extends PircBot {
 		}
 	}
 	
-	public void rollDice(String dieFormula) {
-		int num = new Integer(dieFormula.substring(0, dieFormula.indexOf("d")));
-		int sides = new Integer(dieFormula.substring(dieFormula.indexOf("d")+1));
+	protected void rollFormulas(String formulas) {
 		int roll = 0;
-		for (int i = 1; i <= num; i++) {
-			roll += rollDie(sides);
+		boolean hasMore = true;
+		String nextMod = "+";
+		String cutForms = formulas;
+		while(hasMore) {
+			int plus = cutForms.indexOf("+");
+			int minus = cutForms.indexOf("-");
+			hasMore = !((cutForms.indexOf("+") == -1) && (cutForms.indexOf("-") == -1));
+			if(hasMore) {
+				int nextLoc = 0;
+				if(plus == -1) {
+					nextLoc = minus;
+				} else if(minus > -1 && plus > -1) {
+					nextLoc = ((plus < minus)) ? plus : minus;
+				} else if(minus == -1) {
+					nextLoc = plus;
+				}
+				String nextForm = cutForms.substring(0, nextLoc);
+				int dieRolls = rollDice(nextForm);
+				dieRolls = new Integer(nextMod+dieRolls);
+				roll += dieRolls;
+				if(plus == -1) {
+					nextMod = "-";
+				} else if(minus > -1 && plus > -1) {
+					nextMod = ((plus < minus)) ? "+" : "-";
+				} else if(minus == -1) {
+					nextMod = "+";
+				}
+				cutForms = cutForms.substring(nextLoc+1);
+			} else {
+				int dieRolls = rollDice(cutForms);
+				dieRolls = new Integer(nextMod+dieRolls);
+				roll += dieRolls;
+			}
 		}
+		System.out	.println("Rolled "+formulas+" and got "+roll);
 		sendMessage(settings.getProperty("channel"), ""+roll);
 	}
 	
-	public Random random = new Random();
+	protected int rollDice(String dieFormula) {
+		if(dieFormula.indexOf("d") == -1) {
+			return new Integer(dieFormula);
+		} else {
+			int num = new Integer(dieFormula.substring(0, dieFormula.indexOf("d")));
+			int sides = new Integer(dieFormula.substring(dieFormula.indexOf("d")+1));
+			int roll = 0;
+			for (int i = 1; i <= num; i++) {
+				roll += rollDie(sides);
+			}
+			return roll;
+		}
+	}
 	
-	public int rollDie(int sides) {
+	protected Random random = new Random();
+	
+	protected int rollDie(int sides) {
+		//return sides;
 		return random.nextInt(sides)+1;
 	}
+	
+	private static boolean noGUI = false;
 	
 	public static void main(String[] args) {
 		bot = new EzrebBot();
 		if(args.length == 1) {
-			//bot.channel = args[0];
+			if(args[0].equals("--nogui")) {
+				noGUI = true;
+			}
 		}
 		try {
 			new File("EzrebBot.properties").createNewFile();
@@ -250,6 +370,7 @@ public class EzrebBot extends PircBot {
 			e2.printStackTrace();
 		}
 		Properties prop = new Properties();
+		prop.setProperty("server", "irc.twitch.tv");
 		prop.setProperty("channel", "#mrabezreb");
 		bot.settings = new Properties(prop);
 		try {
@@ -259,9 +380,11 @@ public class EzrebBot extends PircBot {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		ControlPanel.main();
+		if(noGUI == false) {
+			//ControlPanel.main();
+		}
 		try {
-			bot.connect("localhost", 6667, "oauth:8nd7xf50x1wqhuwl02ylgal27jwxzl");
+			bot.connect(bot.settings.getProperty("server"), 6667, "oauth:8nd7xf50x1wqhuwl02ylgal27jwxzl");
 		} catch (NickAlreadyInUseException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

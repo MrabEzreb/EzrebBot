@@ -2,26 +2,23 @@ package mrabezreb.ezrebbot.gui;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.AffineTransform;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import mrabezreb.ezrebbot.EzrebBot;
-import javax.swing.JTextField;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
 
 public class ControlPanel extends JFrame {
 
@@ -73,6 +70,23 @@ public class ControlPanel extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				EzrebBot.bot.disconnect();
 				EzrebBot.bot.dispose();
+				ObjectOutputStream oos = null;
+				try {
+					oos = new ObjectOutputStream(new FileOutputStream(new File("People.people")));
+					oos.writeObject(EzrebBot.bot.people);
+					oos.flush();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						oos.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}	
 				System.exit(0);
 			}
 		});
