@@ -192,6 +192,7 @@ public class EzrebBot extends PircBot {
 					e.printStackTrace();
 				}
 			}
+			sendMessage(channel, "Shutting down! :D");
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -233,7 +234,15 @@ public class EzrebBot extends PircBot {
 			addFans(command.substring(9));
 		} else if(command.equals("!meow")) {
 			sendMessage(channel, "Meow meow meow meow meow meow meow meow! :D");
+		} else if(command.equals("!github")) {
+			sendMessage(channel, "http://mrabezreb.github.io/EzrebBot/");
 		}
+		/* else if(command.equals("!giveaway")) {
+			if(!sender.toLowerCase().equals("mrabezreb")) {
+				return;
+			}
+			
+		}*/
 	}
 	
 	protected void addFans(String args) {
