@@ -50,9 +50,6 @@ header h1 {
   font-weight: bold;
   font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
   color: #b5e853;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1),
-               0 0 5px rgba(181, 232, 83, 0.1),
-               0 0 10px rgba(181, 232, 83, 0.1);
   letter-spacing: -1px;
   -webkit-font-smoothing: antialiased;
 }
@@ -60,6 +57,21 @@ header h1 {
 header h1:before {
   content: "./ ";
   font-size: 24px;
+}
+
+@keyframes blinking {
+    0% {visibility: visible;}
+    25% {visibility: hidden;}
+    75% {visibility: hidden;}
+    100% {visibility: visible;}
+}
+
+header h1:after {
+    content: "_";
+    right: 0%;
+    font-size: 24px;
+    animation: blinking 1s infinite;
+    -webkit-animation: blinking 0.75s infinite;
 }
 
 header h2 {
@@ -90,9 +102,6 @@ h1, h2, h3, h4, h5, h6 {
   font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
   color: #b5e853;
   letter-spacing: -0.03em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1),
-               0 0 5px rgba(181, 232, 83, 0.1),
-               0 0 10px rgba(181, 232, 83, 0.1);
 }
 
 #main_content h1 {
@@ -244,4 +253,19 @@ a {
 
 .cf {
   zoom:1;
+}
+
+@keyframes glowingTitle {
+    0% {text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);}
+    50% {text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);}
+    100% {text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);}
+}
+
+.title {
+    animation-name: glowingTitle;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    -webkit-animation-name: glowingTitle;
+    -webkit-animation-duration: 3s;
+    -webkit-animation-iteration-count: infinite;
 }
