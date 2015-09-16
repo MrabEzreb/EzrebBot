@@ -236,6 +236,8 @@ public class EzrebBot extends PircBot {
 			sendMessage(channel, "Meow meow meow meow meow meow meow meow! :D");
 		} else if(command.equals("!github")) {
 			sendMessage(channel, "http://mrabezreb.github.io/EzrebBot/");
+		} else if(command.equals("!embarrasing")) {
+			sendMessage(channel, "Don't worry, I won't tell anybody Kappa");
 		}
 		/* else if(command.equals("!giveaway")) {
 			if(!sender.toLowerCase().equals("mrabezreb")) {
